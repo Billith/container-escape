@@ -85,27 +85,6 @@ Installation
     sudo systemctl restart nginx
     ```
 * install docker (https://docs.docker.com/engine/install/ubuntu/)
-  * ~~install gVisor sandbox~~ (gVisor is not cooperating with dind docker image, until problem is solved, skip this step)
-    * ~~download gVisor binary~~
-      ```bash
-      $ wget https://storage.googleapis.com/gvisor/releases/master/latest/runsc -O /home/user/runsc
-      $ chmod +x /home/user/runsc
-      ```
-    * ~~`/etc/docker/daemon.json`~~
-      ```json
-      {
-          "runtimes": {
-              "runsc": {
-                  "path": "/home/user/runsc"
-              }
-          },
-          "default-runtime": "runsc"
-      }
-      ```
-    * ~~restart docker~~
-      ```bash
-      $ sudo systemctl restart docker
-      ```  
 * systemd service (optional)
   * `/etc/systemd/system/container-escape.service`
     ```

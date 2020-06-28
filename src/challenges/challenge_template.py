@@ -21,10 +21,10 @@ class Challenge_template(Challenge):
     def description(self):
         return '''description'''
 
-    def run_instance(self, user_id):
+    def run_instance(self, container_name):
         pass
 
-    def remove_instance(self, user_id):
+    def remove_instance(self, container_name):
         pass
 
     def build_challenge(self):

@@ -1,0 +1,103 @@
+{%- extends "base.html" %}
+{%- block title %}Container escape{% endblock %}
+{%- block challenges_menu %}active{% endblock %}
+{%- block content %}
+    <div class="container">
+        <h2>RunC challenge</h2>
+        <hr>
+        <div class="container">
+            <div id="loadingBox">
+                <div class="d-flex justify-content-center">
+                    <div class="spinner-border" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </div>
+                </br>
+                <div class="d-flex justify-content-center">
+                    <p> Building container. It might take a few seconds.</p>
+                </div>
+            </div>
+        </div>
+        <button type="button" class="btn btn-dark" onClick="sendRevertRequest()">Revert</button>
+        <button type="button" class="btn btn-dark" data-toggle="modal" data-target="#descriptionModal">Description</button>
+    </div>
+    <script defer>
+        const state = {
+            NOT_RUNNING: 'not running',
+            START_REQUESTED: 'start requested',
+            PROBING: 'probing',
+            RUNNING: 'running',
+            SOLVED: 'solved'
+        }
+        var current_state = state.NOT_RUNNING
+
+        const sendRunRequest = () => {
+            console.log('sendRunRequest ran');
+            (async () => {
+                const response = await fetch('/api/container/run', {
+                    credentials: 'include'
+                })
+                console.log(response.json())
+            })()
+        }
+
+        const mainLoop = () => {
+            console.log('mainLoop ran')
+            switch (current_state) {
+                case state.NOT_RUNNING: 
+                    sendRunRequest()
+                    break
+                case state.START_REQUESTED: ; break;
+                case state.PROBING: ; break;
+                case state.RUNNING: ; break;
+                case state.SOLVED: ; break;
+            }
+        }
+        
+        setInterval(mainLoop, 1000)
+    </script>
+    <div class="modal fade" id="descriptionModal" tabindex="-1" role="dialog" aria-labelledby="Description" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalScrollableTitle">Challenge description</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                  <p>
+                    The goal of this challenge is to escape from the container. Inside container there's <i>ttyd</i> process running, which gives you remote access to the container. This process is out of scope of this challenge so please don't pay too much attention to that.
+                </p>
+                <p> In order to escape from the container you will have to make use of two informations:
+                    <ul>
+                        <li>Container was spawned using <b><i>runc ver. 1.0.0.rc6</i></b></li>
+                        <li>Administrator is executing command <b><i>docker exec [container] sh</i></b> every minute</li>
+                    </ul>
+                <p>Good luck!</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="winModal" tabindex="-1" role="dialog" aria-labelledby="Congratulations" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Congratulations!</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                  You solved this challenge
+                </div>
+                <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{%- endblock %}

@@ -1,8 +1,8 @@
 {%- extends "base.html" %}
-{%- block title %}Docker sandbox escape{% endblock %}
+{%- block title %}Container escape{% endblock %}
 {%- block challenges_menu %}active{% endblock %}
 {%- block content %}
-    <div class="jumbotron" style="margin-bottom: 0px;">
+    <div class="container">
         <h2>RunC challenge</h2>
         <hr>
         <div class="container">
@@ -14,22 +14,22 @@
                 </div>
                 </br>
                 <div class="d-flex justify-content-center">
-                    <p> Building container. It might take few seconds.</p>
+                    <p>Building container, it might take a few seconds</p>
                 </div>
             </div>
         </div>
-        <button type="button" class="btn btn-dark" onClick="sendRevertRequest()">Revert</button>
+        <button type="button" class="btn btn-dark" id="revertButton" onClick="sendRevertRequest()">Revert</button>
         <button type="button" class="btn btn-dark" data-toggle="modal" data-target="#descriptionModal">Description</button>
     </div>
     <script>
         var terminal = document.createElement('iframe')
-        var timeout_counter = 45
+        var timeout_counter = 60
         var intervalId = 0
         var winIntervalId = 0
         var keepAliveIntervalId = 0
 
-        function checkWin() {
-            var req = new XMLHttpRequest()
+        const checkWin = () => {
+            let req = new XMLHttpRequest()
             req.open('GET', '/api/container/status', false)
             req.send()
             if (req.status == 200) {
@@ -42,30 +42,31 @@
             }
         }
 
-        function keepAlive() {
-            var req = new XMLHttpRequest()
+        const keepAlive = () => {
+            let req = new XMLHttpRequest()
             req.open('GET', '/api/container/keepalive', false)
             req.send()
         }
 
-        function loadTerminal() {
-            document.getElementById('loadingBox').innerHTML = "<iframe width=\"100%\" height=\"500px\" src=\"/challenges/runc/{{ user_id }}/\" ></iframe>"
-            if(keepAliveIntervalId == 0) {
+        const loadTerminal = () => {
+            document.getElementById('loadingBox').innerHTML = "<iframe width=\"100%\" height=\"500px\" src=\"/challenges/runc/{{ container_name }}/\" ></iframe>"
+            if (keepAliveIntervalId == 0) {
                 keepAliveIntervalId = setInterval(keepAlive, 30000)
             }
 
-            if(winIntervalId == 0) {
+            if (winIntervalId == 0) {
                 winIntervalId = setInterval(checkWin, 3000)
             }
+            $('#revertButton')[0].disabled = false
         }
 
-        function sendCheckRequest() {
+        const sendCheckRequest = () => {
             if (timeout_counter == 0) {
                 loadingBox.innerHTML = "<p class=\"d-flex justify-content-center\" >Something went wrong :(</p>"
                 clearInterval(intervalId)
             }
-            var req = new XMLHttpRequest()
-            req.open('GET', '/challenges/runc/{{ user_id }}/', false)
+            let req = new XMLHttpRequest()
+            req.open('GET', '/challenges/runc/{{ container_name }}/', false)
             req.send()
             if (req.status == 200) {
                 loadTerminal()
@@ -74,17 +75,18 @@
             timeout_counter--
         }
 
-        function sendRunRequest() {
-            var req = new XMLHttpRequest()
+        const sendRunRequest = () => {
+            let req = new XMLHttpRequest()
             req.open('GET', '/api/container/run', false)
             req.send()
         }
 
-        function sendRevertRequest() {
+        const sendRevertRequest = () => {
+            $('#revertButton')[0].disabled = true
             clearInterval(winIntervalId)
             winIntervalId = 0
 
-            var req = new XMLHttpRequest()
+            let req = new XMLHttpRequest()
             req.open('GET', '/api/container/revert', true)
             req.send()
 
@@ -95,7 +97,7 @@
                 </div>
                 </br>
                 <div class="d-flex justify-content-center">
-                    <p> Reverting container.</p>
+                    <p>Reverting container</p>
                 </div>`
 
             timeout_counter = 60
@@ -103,15 +105,16 @@
         }
 
         (function startChallenge() {
-            var req = new XMLHttpRequest()
-            req.open('GET', '/challenges/runc/{{ user_id }}/', false)
+            let req = new XMLHttpRequest()
+            req.open('GET', '/challenges/runc/{{ container_name }}/', false)
             req.send()
             if (req.status != 200) {
+                $('#revertButton')[0].disabled = true
                 sendRunRequest()
                 intervalId = setInterval(sendCheckRequest, 3000)
             } else {
                 loadTerminal()
-                terminal.src = '/challenges/runc/{{ user_id }}/'
+                terminal.src = '/challenges/runc/{{ container_name }}/'
             }
         })()
     </script>
@@ -126,9 +129,9 @@
                 </div>
                 <div class="modal-body">
                   <p>
-                    The goal of this challenge is to escape from the container. Inside container there's <i>ttyd</i> process running, which gives you remote access to the container. This process is out of scope of this challenge so please don't pay too much attention to that.
+                    The goal of this challenge is to escape from the container. Inside container there's <i>ttyd</i> process running, which gives you remote access to the container. This process is out of the scope of this challenge, so please don't pay too much attention to it.
                 </p>
-                <p> In order to escape from the container you will have to make use of two informations:
+                <p> In order to escape from the container, you will have to make use of two information:
                     <ul>
                         <li>Container was spawned using <b><i>runc ver. 1.0.0.rc6</i></b></li>
                         <li>Administrator is executing command <b><i>docker exec [container] sh</i></b> every minute</li>

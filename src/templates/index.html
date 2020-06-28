@@ -1,19 +1,12 @@
 {%- extends "base.html" %}
-{%- block title %}Docker sandbox escape{% endblock %}
+{%- block title %}Container escape{% endblock %}
 {%- block home_menu %}active{% endblock %}
 {%- block content %}
-    <div class="jumbotron" style="margin-bottom: 0px;">
+    <div class="container">
         <h1 class="display-4">Container escape</h1>
-        <p class="lead">This is a simple project that provides you challenges which will teach you about containers and containerization secuirty</p>
+        <p class="lead">This is a project that gives you opportunity to solve some challenges, which will teach you about containers and their security</p>
         <hr class="my-4">
-        <p>Every container for a given challange is run inside another container. You can check out source code of page and Dockerfiles <a href="https://github.com/Billith/container-escape">here</a>.</p>
+        <p>Backend of the project uses Docker and "nested containers". You can check out source code <a href="https://github.com/Billith/container-escape">here</a>.</p>
         <a class="btn btn-primary btn-dark" href="/challenges" role="button">Pwn some containers</a>
     </div>
-    {%- with messages = get_flashed_messages() %}
-        {%- if messages %}
-            {%- for msg in messages %}
-                <p>{{ msg }}</p>
-            {%- endfor %}
-        {%- endif %}
-    {%- endwith %}
 {%- endblock %}

@@ -5,42 +5,68 @@
         <title>{% block title %}{% endblock %}</title>
         <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
         <style>
-            body {
-                background-color: rgb(138, 148, 160) !important;
+            html, body {
+                height: 100%;
+            }
+
+            #page-content {
+                flex: 1 0 auto;
+            }
+
+            #sticky-footer {
+                flex-shrink: none;
             }
         </style>
     </head>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-<body>
-    <div>
+<body class="d-flex flex-column">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark static-top">
         <div class="container">
-            <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-                <a class="navbar-brand" href="/">Container escape</a>
-                <div class="collapse navbar-collapse">
-                    <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
-                        <li class="nav-item {% block home_menu %}{% endblock %}">
-                            <a class="nav-link" href="/">Home</a>
-                        </li>
-                        <li class="nav-item {% block challenges_menu %}{% endblock %}">
-                            <a class="nav-link" href="/challenges">Challenges</a>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
+            <a class="navbar-brand" href="/">
+                Container escape
+            </a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item {% block home_menu %}{% endblock %}">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item {% block challenges_menu %}{% endblock %}">
+                        <a class="nav-link" href="/challenges">Challenges</a>
+                    </li>
+                    {%- if is_admin %}
+                    <li class="nav-item {% block users_menu %}{% endblock %}">
+                        <a class="nav-link" href="/users">Users</a>
+                    </li>
+                    {%- endif %}
+                    {%- if not is_logged_in %}
+                    <li class="nav-item {% block login_menu %}{% endblock %}">
+                        <a class="nav-link" href="/login">Login</a>
+                    </li>
+                    {%- endif %}
+                    {%- if is_logged_in %}
+                    <li class="nav-item {% block logout_menu %}{% endblock %}">
+                        <a class="nav-link" href="/logout">Logout</a>
+                    </li>
+                    {%- endif %}
+                </ul>
+            </div>
         </div>
-        <div class="h-100 container">
+    </nav>
+    <div id="page-content">
+        <div class="jumbotron" style="margin-bottom: 0px; height: 100%;">
             {% block content %}
             {% endblock %}
-        </div>
-        <div class="container">
-            <footer id="sticky-footer" class="py-4 bg-dark text-white-50">
-                <div class="container text-center">
-                    <small>Copyright &copy; Container escape</small>
-                </div>
-            </footer>
         </div>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <footer id="sticky-footer" class="py-4 bg-dark text-white-50">
+        <div class="container text-center">
+            <small>Copyright &copy; Container escape</small>
+        </div>
+    </footer>
 </body>
 </html>

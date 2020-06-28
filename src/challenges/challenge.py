@@ -16,11 +16,11 @@ class Challenge(ABC):
         pass
 
     @abstractmethod
-    def run_instance(self, user_id):
+    def run_instance(self, container_name):
         pass
 
     @abstractmethod
-    def remove_instance(self, user_id):
+    def remove_instance(self, container_name):
         pass
 
     @abstractmethod

@@ -1,25 +1,27 @@
 {%- extends "base.html" %}
-{%- block title %}Docker sandbox escape{% endblock %}
+{%- block title %}Container escape{% endblock %}
 {%- block challenges_menu %}active{% endblock %}
 {%- block content %}
-    <div class="jumbotron" style="margin-bottom: 0px;">
+    <div class="container">
         <h2>Challenges</h2>
         <hr>
         <div class="row">
-                {%- if challenges %}
-                    {%- for challenge_name, challenge in challenges.items() %}
-            <div class="col-sm-4">
-                <div class="card text-white bg-dark mb-3" style="width: 18rem;">
+    {%- if challenges %}
+        {%- for challenge_name, challenge in challenges.items() %}
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100 text-white bg-dark mb-3">
                     <div class="card-body">
-                        <h5 class="card-title">{{ challenge.title }}</h5>
+                        <h4 class="card-title">
+                            {{ challenge.title }}
+                        </h4>
                         <h6 class="card-subtitle mb-2 text-muted">{{ challenge.subtitle }}</h6>
                         <p class="card-text">{{ challenge.description }}</p>
                         <a href="/challenges/{{ challenge_name }}" class="btn btn-dark btn-lg active center-block" role="button" aria-pressed="true">Exploit</a>
                     </div>
                 </div>
             </div>
-                    {%- endfor %}
-                {%- endif %}
+        {%- endfor %}
+    {%- endif %}
         </div>
     </div>
 {%- endblock %}
