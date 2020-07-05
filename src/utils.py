@@ -103,10 +103,30 @@ def init_database(bcrypt):
 
 
 def auth(bcrypt, login, password):
+    if login == None or password == None:
+        return None
     user = User.query.filter(User.login == login).first()
     if user and bcrypt.check_password_hash(user.password, password):
         return user
     return None
+
+
+def change_password(bcrypt, user, old_password, password, repassword):
+    if not user:
+        return False
+
+    if not bcrypt.check_password_hash(user.password, old_password):
+        return False
+
+    if password != repassword:
+        return False
+
+    if not 8 <= len(password) <= 72:
+        return False
+
+    user.password = bcrypt.generate_password_hash(password)
+    db_session.commit()
+    return True
 
 
 def setup_logger():

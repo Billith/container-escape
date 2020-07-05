@@ -4,44 +4,51 @@
 {%- block content %}
     <div class="container">
         <script defer>
+            var currentUserId = -1;
+
             window.onload = () => {
-                $("#loginInput")[0].addEventListener("keyup", (e) => {
-                    if (e.keyCode === 13)
-                        submitNewUser()
+                let submitUserInputs = ['#loginInput', '#passwordInput', '#rePasswordInput']
+                let changePasswordInputs = ['#changePasswordInput', '#changeRePasswordInput']
+
+                submitUserInputs.forEach( (input) => {
+                    $(input)[0].addEventListener('keyup', (e) => {
+                        if (e.keyCode === 13)
+                            submitNewUser()
+                    })
                 })
 
-                $("#passwordInput")[0].addEventListener("keyup", (e) => {
-                    if (e.keyCode === 13)
-                        submitNewUser()
-                })
-
-                $("#rePasswordInput")[0].addEventListener("keyup", (e) => {
-                    if (e.keyCode === 13)
-                        submitNewUser()
+                changePasswordInputs.forEach( (input) => {
+                    $(input)[0].addEventListener('keyup', (e) => {
+                        if (e.keyCode === 13)
+                            changeUserPassword()
+                    })
                 })
             }
 
+            const validatePassword = (password, repassword) => {
+                if (password.length < 8)
+                    return `<div class="alert alert-danger" role="alert">Password is too short (min. 8 characters)</div>`;
+
+                if (password.length > 72)
+                    return `<div class="alert alert-danger" role="alert">Password is too long (max. 72 characters)</div>`
+
+                if (password != repassword)
+                    return `<div class="alert alert-danger" role="alert">Passwords doesn't match</div>`
+                
+                return null;
+            }
+
             const submitNewUser = () => {
-                var login = $("#loginInput").val()
-                var password = $("#passwordInput").val()
-                var repassword = $("#rePasswordInput").val()
+                let login = $("#loginInput").val()
+                let password = $("#passwordInput").val()
+                let repassword = $("#rePasswordInput").val()
 
-                if (password.length < 8) {
-                    $("#newUserAlert").html(`<div class="alert alert-danger" role="alert">Password is too short (min. 8 characters)</div>`)
+                let error = validatePassword(password, repassword)
+                if (error != null) {
+                    $("#newUserAlert").html(error)
                     return
                 }
 
-                if (password.length > 72) {
-                    $("#newUserAlert").html(`<div class="alert alert-danger" role="alert">Password is too long (max. 72 characters)</div>`)
-                    return
-                }
-
-                if (password != repassword) {
-                    $("#newUserAlert").html(`<div class="alert alert-danger" role="alert">Passwords doesn't match</div>`)
-                    return
-                }
-
-                console.log('works: ' + login + ' : ' + password + ' : ' + repassword);
                 (async () => {
                     const rawResponse = await fetch('/api/users/create', {
                         method: 'POST',
@@ -61,19 +68,53 @@
             }
 
             const deleteUser = (id) => {
-                console.log('Trying to delete user with ID ' + id);
                 (async () => {
                     const rawResponse = await fetch('/api/users/delete/' + id, {
                         credentials: 'include'
                     })
                     const content = await rawResponse.json()
                     if (content['message'] == 'error') {
-                        //alert('error')
-                        //$("#newUserAlert").html('<div class="alert alert-danger" role="alert">Error occured while adding new user</div>')
+                        // TODO
                     } else {
                         window.location.reload(true);
                     }
                 })();
+            }
+
+            const toggleChangePasswordModal = (id) => {
+                currentUserId = id
+                $('#changePasswordModal').modal('show')
+            }
+
+            const changeUserPassword = () => {
+                let oldPassword = $("#oldPasswordInput").val()
+                let password = $("#changePasswordInput").val()
+                let repassword = $("#changeRePasswordInput").val()
+
+                let error = validatePassword(password, repassword)
+                if (error != null) {
+                    $("#changePasswordAlert").html(error)
+                    return
+                }
+
+                if (currentUserId !== -1){
+                    (async () => {
+                        const rawResponse = await fetch('/api/users/change/' + currentUserId, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({'old_password': oldPassword, 'password': password, 'repassword': repassword}),
+                            credentials: 'include'
+                        })
+                        const content = await rawResponse.json()
+                        if (content['message'] == 'error') {
+                            $("#changePasswordAlert").html('<div class="alert alert-danger" role="alert">Error occured while adding new user</div>')
+                        } else {
+                            $('#changePasswordModal').modal('hide')
+                        }
+                    })();
+                }
             }
         </script>
         <h2>Users</h2>
@@ -93,8 +134,10 @@
                     <th scope="row">{{ user.id }}</th>
                     <td>{{ user.login }}</td>
                     <td>
-                        <!-- <button type="button" class="btn btn-light">Edit</button> -->
+                        <button type="button" class="btn btn-light" onClick="toggleChangePasswordModal({{ user.id }})">Change password</button>
+                        {%- if user.login != 'admin' %}
                         <button type="button" class="btn btn-danger" onClick="deleteUser({{ user.id }})">Delete</button>
+                        {%- endif %}
                     </td>
                 </tr>
                 {%- endfor %}
@@ -114,7 +157,7 @@
                             <input type="text" class="form-control" id="loginInput" placeholder="Enter login">
                         </div>
                         <div class="form-group">
-                            <input type="password" class="form-control" id="passwordInput" placeholder="Enter Password (from 8 to 72 characters)">
+                            <input type="password" class="form-control" id="passwordInput" placeholder="Enter password (from 8 to 72 characters)">
                         </div>
                         <div class="form-group">
                             <input type="password" class="form-control" id="rePasswordInput" placeholder="Repeat password">
@@ -124,6 +167,34 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                         <button type="button" class="btn btn-primary" onClick="submitNewUser()">Save changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="changePasswordModal" tabindex="-1" role="dialog" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="changePasswordModalLabel">Change password</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <input type="password" class="form-control" id="oldPasswordInput" placeholder="Enter old password">
+                        </div>
+                        <div class="form-group">
+                            <input type="password" class="form-control" id="changePasswordInput" placeholder="Enter new password (from 8 to 72 characters)">
+                        </div>
+                        <div class="form-group">
+                            <input type="password" class="form-control" id="changeRePasswordInput" placeholder="Repeat new password">
+                        </div>
+                        <div id="changePasswordAlert"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" onClick="changeUserPassword()">Save changes</button>
                     </div>
                 </div>
             </div>

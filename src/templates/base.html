@@ -47,6 +47,9 @@
                     </li>
                     {%- endif %}
                     {%- if is_logged_in %}
+                    <li class="nav-item {% block change_password_menu %}{% endblock %}">
+                        <a class="nav-link" href="/change_password">Change password</a>
+                    </li>
                     <li class="nav-item {% block logout_menu %}{% endblock %}">
                         <a class="nav-link" href="/logout">Logout</a>
                     </li>
