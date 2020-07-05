@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, session, redirect, url_for
-from flask import abort, jsonify, flash
+from flask import abort, jsonify, flash, Markup
 from flask_bcrypt import Bcrypt
 from functools import wraps
 import threading
@@ -59,7 +59,7 @@ def login():
     if session.get('login'):
         return redirect('/')
 
-    # user that tries to login
+    # user which tries to login
     if request.method == 'POST':
         login = request.values.get('login')
         password = request.values.get('password')
@@ -98,6 +98,36 @@ def users():
     )
 
 
+@app.route('/change_password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    if request.method == 'POST':
+        old_password = request.values.get('old_password')
+        password = request.values.get('password')
+        repassword = request.values.get('repassword')
+
+        if old_password != None and password != None and repassword != None:
+            user = User.query.filter(User.login == session['login']).first()
+            result = utils.change_password(bcrypt, user, old_password, password, repassword)
+
+            if result:
+                flash(Markup('<div class="alert alert-success text-center" role="alert">Password changed</div>'))
+            else:
+                flash(Markup('<div class="alert alert-danger text-center" role="alert">Error</div>'))
+
+        return render_template(
+            'change_password.html',
+            is_logged_in=session.get('login'),
+            is_admin=session.get('is_admin'),
+        )
+    elif request.method == 'GET':
+        return render_template(
+            'change_password.html',
+            is_logged_in=session.get('login'),
+            is_admin=session.get('is_admin'),
+        )
+
+
 @app.route('/challenges', methods=['GET'])
 def challenges_page():
     return render_template(
@@ -114,7 +144,7 @@ def challenge_page(challenge):
     if challenge not in enabled_challenges:
         abort(404)
 
-    if 'id' in session and session['id'].split('-')[0] == challenge:
+    if session.get('id') and session['id'].split('-')[0] == challenge:
         try:
             client.containers.get(session['id'])  # check if container exists
             container_name = session['id']             # required by template
@@ -193,7 +223,7 @@ def revert_container():
 @app.route('/api/container/status', methods=['GET'])
 @login_required
 def container_status():
-    if 'id' in session:
+    if session.get('id'):
         if session['id'] in solved_challenges:
             return jsonify(message='solved'), 200
         else:
@@ -207,6 +237,10 @@ def container_status():
 @admin_required
 def create_user():
     data = request.get_json()
+
+    if not all(key in data for key in ['login', 'password']):
+        return jsonify(message='error'), 400
+
     user_login = data['login']
     password = data['password']
 
@@ -224,13 +258,33 @@ def create_user():
     return jsonify(message='error'), 400
 
 
+@app.route('/api/users/change/<int:user_id>', methods=['POST'])
+@login_required
+@admin_required
+def change_user_password(user_id):
+    data = request.get_json()
+
+    # if dict has password and repassword keys
+    if not all(key in data for key in ['old_password', 'password', 'repassword']):
+        return jsonify(message='error'), 400
+
+    old_password = data['old_password']
+    password = data['password']
+    repassword = data['repassword']
+
+    user = User.query.filter(User.id == user_id).first()
+    result = utils.change_password(bcrypt, user, old_password, password, repassword)
+
+    return (jsonify(message='ok'), 200) if result else (jsonify(message='error'), 400)
+
+
 @app.route('/api/users/delete/<int:user_id>', methods=['GET'])
 @login_required
 @admin_required
 def dalete_user(user_id):
     from models.user import User
     user = User.query.filter(User.id == user_id).first()
-    if user:
+    if user and user.login != 'admin':
         db_session.delete(user)
         db_session.commit()
         return jsonify(message='ok'), 200
