@@ -30,7 +30,7 @@
 
         const checkWin = () => {
             let req = new XMLHttpRequest()
-            req.open('GET', '/api/container/status', false)
+            req.open('GET', '/api/container/mount/status', false)
             req.send()
             if (req.status == 200) {
                 resp = JSON.parse(req.response)
@@ -44,7 +44,7 @@
 
         const keepAlive = () => {
             let req = new XMLHttpRequest()
-            req.open('GET', '/api/container/keepalive', false)
+            req.open('GET', '/api/container/mount/keepalive', false)
             req.send()
         }
 
@@ -77,7 +77,7 @@
 
         const sendRunRequest = () => {
             let req = new XMLHttpRequest()
-            req.open('GET', '/api/container/run', false)
+            req.open('GET', '/api/container/mount/run', false)
             req.send()
         }
 
@@ -87,7 +87,7 @@
             winIntervalId = 0
 
             let req = new XMLHttpRequest()
-            req.open('GET', '/api/container/revert', true)
+            req.open('GET', '/api/container/mount/revert', true)
             req.send()
 
             document.getElementById('loadingBox').innerHTML = `<div class="d-flex justify-content-center">

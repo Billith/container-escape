@@ -140,20 +140,20 @@ def challenges_page():
 
 @app.route('/challenges/<challenge>', methods=['GET'])
 @login_required
-def challenge_page(challenge):
+def challenge_page(challenge: str):
     if challenge not in enabled_challenges:
         abort(404)
 
-    if session.get('id') and session['id'].split('-')[0] == challenge:
+    if session.get(challenge) and session[challenge].split('-')[0] == challenge:
         try:
-            client.containers.get(session['id'])  # check if container exists
-            container_name = session['id']             # required by template
+            client.containers.get(session[challenge])  # check if container exists
+            container_name = session[challenge]        # required by template
         except:
-            session.pop('id', None)
+            session.pop(challenge, None)
             return redirect(url_for('challenge_page', challenge=challenge))
     else:
-        session['id'] = challenge + '-' + utils.generate_id() + '-' + session['login']
-        container_name = session['id']  # required by template
+        session[challenge] = challenge + '-' + utils.generate_id() + '-' + session['login']
+        container_name = session[challenge]  # required by template
 
     return render_template(
         f'{challenge}.html',
@@ -163,13 +163,13 @@ def challenge_page(challenge):
     )
 
 
-@app.route('/api/container/keepalive', methods=['GET'])
+@app.route('/api/container/<challenge>/keepalive', methods=['GET'])
 @login_required
-def keepalive_container():
+def keepalive_container(challenge: str):
     global keepalive_containers
 
-    if 'id' in session:
-        container_name = session['id']
+    if challenge in session:
+        container_name = session[challenge]
         keepalive_containers[container_name] = datetime.datetime.now()
         app.logger.info(f'updated keepalive for {container_name}')
         return jsonify(message='ok'), 200
@@ -177,21 +177,21 @@ def keepalive_container():
     return jsonify(message='wrong format'), 400
 
 
-@app.route('/api/container/run', methods=['GET'])
+@app.route('/api/container/<challenge>/run', methods=['GET'])
 @login_required
-def run_container():
-    if 'id' in session:
-        challenge = session['id'].split('-')[0]
-        challenge_id = session['id'].split('-')[1]
-        username = ''.join(session['id'].split('-')[2:])
+def run_container(challenge: str):
+    if challenge in session:
+        challenge_name = session[challenge].split('-')[0]
+        challenge_id = session[challenge].split('-')[1]
+        username = ''.join(session[challenge].split('-')[2:])
 
-        if challenge in enabled_challenges and not utils.container_exists(client, session['id']):
+        if challenge_name in enabled_challenges and not utils.container_exists(client, session[challenge]):
             if utils.check_user_container_limit(client, username):
                 return jsonify(message='error', reason='Challenge instances limit reached')
             try:
                 threading.Thread(
-                    target=enabled_challenges[challenge].run_instance,
-                    args=(session['id'], keepalive_containers)
+                    target=enabled_challenges[challenge_name].run_instance,
+                    args=(session[challenge], keepalive_containers)
                 ).start()
                 return jsonify(message='ok'), 200
             except Exception as e:
@@ -200,18 +200,18 @@ def run_container():
     return jsonify(message='error'), 400
 
 
-@app.route('/api/container/revert', methods=['GET'])
+@app.route('/api/container/<challenge>/revert', methods=['GET'])
 @login_required
-def revert_container():
-    if 'id' in session:
-        challenge = session['id'].split('-')[0]
+def revert_container(challenge: str):
+    if challenge in session:
+        challenge_name = session[challenge].split('-')[0]
 
-        if challenge in enabled_challenges:
+        if challenge_name in enabled_challenges:
             try:
-                enabled_challenges[challenge].remove_instance(session['id'])
+                enabled_challenges[challenge_name].remove_instance(session[challenge])
                 threading.Thread(
-                    target=enabled_challenges[challenge].run_instance,
-                    args=(session['id'], keepalive_containers)
+                    target=enabled_challenges[challenge_name].run_instance,
+                    args=(session[challenge], keepalive_containers)
                 ).start()
                 return jsonify(message='ok'), 200
             except Exception as e:
@@ -220,11 +220,11 @@ def revert_container():
     return jsonify(message='error'), 400
 
 
-@app.route('/api/container/status', methods=['GET'])
+@app.route('/api/container/<challenge>/status', methods=['GET'])
 @login_required
-def container_status():
-    if session.get('id'):
-        if session['id'] in solved_challenges:
+def container_status(challenge: str):
+    if session.get(challenge):
+        if session[challenge] in solved_challenges:
             return jsonify(message='solved'), 200
         else:
             return jsonify(message='not solved'), 200
