@@ -1,0 +1,164 @@
+{%- extends "base.html" %}
+{%- block title %}Container escape{% endblock %}
+{%- block challenges_menu %}active{% endblock %}
+{%- block content %}
+    <div class="container">
+        <h2>Mount challenge</h2>
+        <hr>
+        <div class="container">
+            <div id="loadingBox">
+                <div class="d-flex justify-content-center">
+                    <div class="spinner-border" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </div>
+                </br>
+                <div class="d-flex justify-content-center">
+                    <p>Building container, it might take a few seconds</p>
+                </div>
+            </div>
+        </div>
+        <button type="button" class="btn btn-dark" id="revertButton" onClick="sendRevertRequest()">Revert</button>
+        <button type="button" class="btn btn-dark" data-toggle="modal" data-target="#descriptionModal">Description</button>
+    </div>
+    <script>
+        var terminal = document.createElement('iframe')
+        var timeout_counter = 60
+        var intervalId = 0
+        var winIntervalId = 0
+        var keepAliveIntervalId = 0
+
+        const checkWin = () => {
+            let req = new XMLHttpRequest()
+            req.open('GET', '/api/container/status', false)
+            req.send()
+            if (req.status == 200) {
+                resp = JSON.parse(req.response)
+                if (resp['message'] == 'solved') {
+                    clearInterval(winIntervalId)
+                    winIntervalId = 0
+                    $('#winModal').modal('show')
+                }
+            }
+        }
+
+        const keepAlive = () => {
+            let req = new XMLHttpRequest()
+            req.open('GET', '/api/container/keepalive', false)
+            req.send()
+        }
+
+        const loadTerminal = () => {
+            document.getElementById('loadingBox').innerHTML = "<iframe width=\"100%\" height=\"500px\" src=\"/challenges/mount/{{ container_name }}/\" ></iframe>"
+            if (keepAliveIntervalId == 0) {
+                keepAliveIntervalId = setInterval(keepAlive, 30000)
+            }
+
+            if (winIntervalId == 0) {
+                winIntervalId = setInterval(checkWin, 3000)
+            }
+            $('#revertButton')[0].disabled = false
+        }
+
+        const sendCheckRequest = () => {
+            if (timeout_counter == 0) {
+                loadingBox.innerHTML = "<p class=\"d-flex justify-content-center\" >Something went wrong :(</p>"
+                clearInterval(intervalId)
+            }
+            let req = new XMLHttpRequest()
+            req.open('GET', '/challenges/mount/{{ container_name }}/', false)
+            req.send()
+            if (req.status == 200) {
+                loadTerminal()
+                clearInterval(intervalId)
+            }
+            timeout_counter--
+        }
+
+        const sendRunRequest = () => {
+            let req = new XMLHttpRequest()
+            req.open('GET', '/api/container/run', false)
+            req.send()
+        }
+
+        const sendRevertRequest = () => {
+            $('#revertButton')[0].disabled = true
+            clearInterval(winIntervalId)
+            winIntervalId = 0
+
+            let req = new XMLHttpRequest()
+            req.open('GET', '/api/container/revert', true)
+            req.send()
+
+            document.getElementById('loadingBox').innerHTML = `<div class="d-flex justify-content-center">
+                    <div class="spinner-border" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </div>
+                </br>
+                <div class="d-flex justify-content-center">
+                    <p>Reverting container</p>
+                </div>`
+
+            timeout_counter = 60
+            intervalId = setInterval(sendCheckRequest, 3000)
+        }
+
+        (function startChallenge() {
+            let req = new XMLHttpRequest()
+            req.open('GET', '/challenges/mount/{{ container_name }}/', false)
+            req.send()
+            if (req.status != 200) {
+                $('#revertButton')[0].disabled = true
+                sendRunRequest()
+                intervalId = setInterval(sendCheckRequest, 3000)
+            } else {
+                loadTerminal()
+                terminal.src = '/challenges/mount/{{ container_name }}/'
+            }
+        })()
+    </script>
+    <div class="modal fade" id="descriptionModal" tabindex="-1" role="dialog" aria-labelledby="Description" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalScrollableTitle">Challenge description</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                  <p>
+                    The goal of this challenge is to escape from the container. Inside container there's <i>ttyd</i> process running, which gives you remote access to the container. This process is out of scope of this challenge so please don't pay too much attention to that.
+                </p>
+                <p> In order to escape from the container you will have to make use of this information:
+                    <ul>
+                        <li>Container was spawned with parameters <b><i>--device="..."</i></b> and <b><i>--cap-add="SYS_ADMIN"</i></b></li>
+                    </ul>
+                <p>Good luck!</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="winModal" tabindex="-1" role="dialog" aria-labelledby="Congratulations" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Congratulations!</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                  You solved this challenge
+                </div>
+                <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{%- endblock %}
